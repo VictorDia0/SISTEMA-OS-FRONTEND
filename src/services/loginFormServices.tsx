@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-
-import api from "@/services/axiosConfig";
+import api from "@/lib/api";
+import { LoginFormProps } from "@/types/login";
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -16,10 +16,6 @@ if (!backendUrl) {
   throw new Error(
     "A URL do backend não foi encontrada. Verifique o arquivo .env."
   );
-}
-
-interface LoginFormProps {
-  onLogin: () => void;
 }
 
 const ErrorAlert = ({ message }: { message: string }) => (
@@ -34,18 +30,13 @@ const ErrorAlert = ({ message }: { message: string }) => (
   </Alert>
 );
 const LoginFormServices = ({ onLogin }: LoginFormProps) => {
-  const [email, setEmail] = useState<string>("");
+  const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const isEmailValid = (email: string) => /\S+@\S+\.\S+/.test(email);
 
   const handleValidation = () => {
-    if (!isEmailValid(email)) {
-      setError("Por favor, insira um email válido.");
-      return false;
-    }
     if (password.length < 6) {
       setError("A senha deve ter pelo menos 6 caracteres.");
       return false;
@@ -59,16 +50,27 @@ const LoginFormServices = ({ onLogin }: LoginFormProps) => {
 
     setIsLoading(true);
     setError("");
+
     try {
-      const response = await api.post(`${backendUrl}api/login`, {
-        email,
+      const response = await api.post(`${backendUrl}api/auth/login`, {
+        username,
         password,
       });
-      const { token } = response.data;
-      
+      const { token, role } = response.data;
+
       document.cookie = `token=${token}; path=/; max-age=86400;`;
+      localStorage.setItem("role", role);
+
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      onLogin();
+
+      if (role === "ADMIN") {
+        onLogin("/admin/dashboard");
+      } else if (role === "DOCENTE") {
+        onLogin("/docente/dashboard");
+      } else {
+        onLogin("/aluno/dashboard");
+      }
+
     } catch (err) {
       if (err instanceof Error) {
         console.error(err.message);
@@ -83,13 +85,13 @@ const LoginFormServices = ({ onLogin }: LoginFormProps) => {
   return (
     <form onSubmit={handleLogin} aria-label="Login Form">
       <div>
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="Username">Username</Label>
         <Input
-          type="email"
-          id="email"
-          placeholder="Digite seu email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text"
+          id="username"
+          placeholder="Digite seu username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           required
           aria-required="true"
           disabled={isLoading}

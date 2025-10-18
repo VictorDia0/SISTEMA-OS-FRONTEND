@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import "../styles/globals.css";
 
 
 const geistSans = Geist({
@@ -14,7 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sistema OS"
+  title: "Sistema de Avaliação",
+  description: "Sistema de Avaliação para Professores e Alunos",
 };
 
 export default function RootLayout({

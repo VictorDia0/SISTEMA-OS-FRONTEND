@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Home,
   Package,
@@ -9,7 +10,6 @@ import {
   ChevronUp,
   LogOut,
 } from "lucide-react";
-
 import {
   Sidebar,
   SidebarContent,
@@ -29,6 +29,30 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import Link from "next/link";
+import api from "@/services/axiosConfig";
+
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+if (!backendUrl) {
+  console.error("NEXT_PUBLIC_BACKEND_URL não está configurada.");
+  throw new Error(
+    "A URL do backend não foi encontrada. Verifique o arquivo .env."
+  );
+}
+
+// Função para obter o token dos cookies
+const getTokenFromCookies = () => {
+  const name = "token=";
+  const decodedCookie = decodeURIComponent(document.cookie);
+  const cookieArray = decodedCookie.split(';');
+  for(let i = 0; i < cookieArray.length; i++) {
+    const cookie = cookieArray[i].trim();
+    if (cookie.indexOf(name) === 0) {
+      return cookie.substring(name.length, cookie.length);
+    }
+  }
+  return "";
+};
 
 // Menu items.
 const items = [
@@ -41,6 +65,37 @@ const items = [
 ];
 
 export function AppSidebar() {
+  const [userName, setUserName] = useState("Carregando...");
+
+  // Função para buscar os dados do usuário
+  const fetchUserData = async () => {
+    try {
+      const token = getTokenFromCookies(); // Obtém o token dos cookies
+      const userId = localStorage.getItem("userId"); // Obtém o ID do usuário do localStorage
+      if (!token || !userId) {
+        throw new Error("Token ou ID do usuário não encontrado");
+      }
+
+      const response = await api.get(`${backendUrl}/api/users/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const userData = response.data; // Extraia os dados do usuário
+      const fullName = `${userData.name} ${userData.surname}`; // Concatena nome e sobrenome
+      setUserName(fullName); // Atualiza o estado com o nome completo
+    } catch (error) {
+      console.error("Erro ao buscar dados do usuário:", error);
+      setUserName("Erro ao carregar");
+    }
+  };
+
+  // Busca os dados do usuário quando o componente é montado
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
   return (
     <Sidebar className="fixed inset-y-0 left-0 z-10 hidden border-r bg-primary sm:flex flex-col">
       <SidebarContent className="bg-primary">
@@ -81,8 +136,7 @@ export function AppSidebar() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton className="text-primary-foreground">
-                  <User2 /> Usuario{" "}
-                  {/* Mudar aqui para colocar o nome do usuario  */}
+                  <User2 /> {userName} {/* Exibe o nome do usuário */}
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
