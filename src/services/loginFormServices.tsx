@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -7,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import api from "@/lib/api";
-import { LoginFormProps } from "@/types/login";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -29,15 +31,16 @@ const ErrorAlert = ({ message }: { message: string }) => (
     <AlertDescription>{message}</AlertDescription>
   </Alert>
 );
-const LoginFormServices = ({ onLogin }: LoginFormProps) => {
-  const [username, setUsername] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [error, setError] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
+const LoginFormServices = () => {
+  const [form, setForm] = useState({ username: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const { login } = useAuth();
+  const router = useRouter();
 
   const handleValidation = () => {
-    if (password.length < 6) {
+    if (form.password.length < 6) {
       setError("A senha deve ter pelo menos 6 caracteres.");
       return false;
     }
@@ -48,53 +51,50 @@ const LoginFormServices = ({ onLogin }: LoginFormProps) => {
     event.preventDefault();
     if (!handleValidation()) return;
 
-    setIsLoading(true);
+    setLoading(true);
     setError("");
 
     try {
-      const response = await api.post(`${backendUrl}api/auth/login`, {
-        username,
-        password,
-      });
+      const response = await api.post(`${backendUrl}api/auth/login`, form);
+   
       const { token, role } = response.data;
 
-      document.cookie = `token=${token}; path=/; max-age=86400;`;
-      localStorage.setItem("role", role);
-
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      login(token, role);
 
       if (role === "ADMIN") {
-        onLogin("/admin/dashboard");
+        router.push("/admin/dashboard");
       } else if (role === "DOCENTE") {
-        onLogin("/docente/dashboard");
+        router.push("/docente/dashboard");
       } else {
-        onLogin("/aluno/dashboard");
+        router.push("/aluno/dashboard");
       }
 
-    } catch (err) {
-      if (err instanceof Error) {
-        console.error(err.message);
+    } catch (err: any) {
+      console.error("Erro no login:", err);
+      
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
       } else {
-        console.error("Erro desconhecido", err);
+        setError("Erro ao fazer login. Verifique suas credenciais.");
       }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
     <form onSubmit={handleLogin} aria-label="Login Form">
       <div>
-        <Label htmlFor="Username">Username</Label>
+        <Label htmlFor="username">Username</Label>
         <Input
           type="text"
           id="username"
           placeholder="Digite seu username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          value={form.username}
+          onChange={(e) => setForm({ ...form, username: e.target.value })}
           required
           aria-required="true"
-          disabled={isLoading}
+          disabled={loading}
         />
       </div>
       <div className="mt-4">
@@ -103,16 +103,16 @@ const LoginFormServices = ({ onLogin }: LoginFormProps) => {
           type="password"
           id="password"
           placeholder="Digite sua senha"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          value={form.password}
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
           required
           aria-required="true"
-          disabled={isLoading}
+          disabled={loading}
         />
       </div>
       {error && <ErrorAlert message={error} />}
-      <Button className="mt-6 w-full " type="submit" disabled={isLoading}>
-        {isLoading ? <Spinner className="text-white" /> : "ENTRAR"}
+      <Button className="mt-6 w-full" type="submit" disabled={loading}>
+        {loading ? <Spinner className="text-white" /> : "ENTRAR"}
       </Button>
     </form>
   );
