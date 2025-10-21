@@ -1,4 +1,3 @@
-
 import React from "react";
 import { AppSidebar } from "../app-sidebar";
 import { SidebarProvider, SidebarTrigger } from "../ui/sidebar";

@@ -111,7 +111,7 @@ const LoginFormServices = ({ onLogin }: LoginFormProps) => {
         />
       </div>
       {error && <ErrorAlert message={error} />}
-      <Button className="mt-6 w-full" type="submit" disabled={isLoading}>
+      <Button className="mt-6 w-full " type="submit" disabled={isLoading}>
         {isLoading ? <Spinner className="text-white" /> : "ENTRAR"}
       </Button>
     </form>

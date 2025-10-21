@@ -17,7 +17,7 @@ const LoginPage = () => {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-l from-sky-300 via-sky-400 to-sky-700 sm:flex-row">
+    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-l from-slate-900 via-blue-900 to-slate-900 sm:flex-row">
       <header className="fixed top-0 w-full bg-transparent z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         </div>

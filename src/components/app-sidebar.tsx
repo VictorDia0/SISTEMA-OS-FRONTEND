@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import {
   Home,
-  Package,
-  Settings,
+  BookUser,
   UsersRound,
-  AlarmClock,
-  ListCheck,
   User2,
   ChevronUp,
   LogOut,
+  SwatchBook,
+  Cog,
 } from "lucide-react";
 import {
   Sidebar,
@@ -29,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import Link from "next/link";
-import api from "@/services/axiosConfig";
+import api from "@/lib/api";
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -40,7 +39,6 @@ if (!backendUrl) {
   );
 }
 
-// Função para obter o token dos cookies
 const getTokenFromCookies = () => {
   const name = "token=";
   const decodedCookie = decodeURIComponent(document.cookie);
@@ -54,24 +52,21 @@ const getTokenFromCookies = () => {
   return "";
 };
 
-// Menu items.
 const items = [
-  { title: "Inicio", url: "#", icon: Home },
-  { title: "Clientes", url: "#", icon: UsersRound },
-  { title: "Produtos", url: "#", icon: Package },
-  { title: "Serviços", url: "#", icon: AlarmClock },
-  { title: "Ordem de Seriços", url: "#", icon: ListCheck },
-  { title: "Configurações", url: "#", icon: Settings },
+  { title: "Inicio", url: "/admin/dashboard", icon: Home },
+  { title: "Alunos", url: "/admin/alunos", icon: BookUser  },
+  { title: "Docentes", url: "/admin/docentes", icon: UsersRound },
+  { title: "Disciplinas", url: "/admin/disciplinas", icon: SwatchBook   },
+  { title: "Configurações", url: "/admin/configuracoes", icon: Cog },
 ];
 
 export function AppSidebar() {
   const [userName, setUserName] = useState("Carregando...");
 
-  // Função para buscar os dados do usuário
   const fetchUserData = async () => {
     try {
-      const token = getTokenFromCookies(); // Obtém o token dos cookies
-      const userId = localStorage.getItem("userId"); // Obtém o ID do usuário do localStorage
+      const token = getTokenFromCookies();
+      const userId = localStorage.getItem("userId");
       if (!token || !userId) {
         throw new Error("Token ou ID do usuário não encontrado");
       }
@@ -82,16 +77,15 @@ export function AppSidebar() {
         },
       });
 
-      const userData = response.data; // Extraia os dados do usuário
-      const fullName = `${userData.name} ${userData.surname}`; // Concatena nome e sobrenome
-      setUserName(fullName); // Atualiza o estado com o nome completo
+      const userData = response.data;
+      const fullName = `${userData.name} ${userData.surname}`;
+      setUserName(fullName);
     } catch (error) {
       console.error("Erro ao buscar dados do usuário:", error);
       setUserName("Erro ao carregar");
     }
   };
 
-  // Busca os dados do usuário quando o componente é montado
   useEffect(() => {
     fetchUserData();
   }, []);
@@ -136,7 +130,7 @@ export function AppSidebar() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton className="text-primary-foreground">
-                  <User2 /> {userName} {/* Exibe o nome do usuário */}
+                  <User2 /> {userName}
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
